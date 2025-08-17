@@ -1,0 +1,26 @@
+# Project exclude paths
+### IDE ###
+.idea/
+*.iml
+*.ipr
+*.iws
+HELP.md
+.gitattributes
+### Build ###
+target/
+out/
+bin/
+build/
+
+### Maven ###
+.mvn/
+mvnw
+mvnw.cmd
+
+### Logs ###
+*.log
+logs/
+
+### OS ###
+.DS_Store
+Thumbs.db

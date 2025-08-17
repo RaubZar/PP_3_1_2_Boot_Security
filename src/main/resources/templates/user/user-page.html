@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>User Page</title>
+</head>
+<body>
+<h1>User Page</h1>
+<div sec:authorize="isAuthenticated()">
+    <span>Logged as: </span><span sec:authentication="name"></span>
+    <span> with roles: </span><span sec:authentication="principal.authorities"></span>
+    <form th:action="@{/logout}" method="post">
+        <button type="submit">Logout</button>
+    </form>
+</div>
+<div>
+    <p>ID: <span th:text="${user.id}"></span></p>
+    <p>Name: <span th:text="${user.name}"></span></p>
+    <p>Email: <span th:text="${user.email}"></span></p>
+    <p>Age: <span th:text="${user.age}"></span></p>
+    <p>Username: <span th:text="${user.username}"></span></p>
+    <p>Roles: <span th:text="${user.roles}"></span></p>
+</div>
+</body>
+</html>
