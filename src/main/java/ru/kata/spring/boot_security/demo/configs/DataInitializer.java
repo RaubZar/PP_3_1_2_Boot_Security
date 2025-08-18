@@ -13,6 +13,7 @@ import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.service.UserService;
 
+import java.util.HashSet;
 import java.util.Set;
 
 @Component
@@ -39,7 +40,6 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         try {
             logger.info("=== Начало инициализации данных ===");
-
 
             waitForDependencies();
 
@@ -71,12 +71,11 @@ public class DataInitializer implements CommandLineRunner {
     private void clearExistingData() {
         logger.info("Очистка существующих данных...");
         try {
-
             userService.getAllUsers().forEach(user -> {
                 logger.debug("Удаление пользователя: {}", user.getUsername());
                 userService.deleteUser(user.getId());
             });
-            
+
             roleDao.findAll().forEach(role -> {
                 logger.debug("Удаление роли: {}", role.getName());
                 roleDao.delete(role);
@@ -93,7 +92,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void createRoleIfNotExists(String roleName) {
-        if (roleDao.findByName(roleName) == null) {
+        if (roleDao.findByName(roleName).isEmpty()) {
             Role role = new Role(roleName);
             roleDao.save(role);
             logger.info("Создана роль: {}", roleName);
@@ -110,54 +109,53 @@ public class DataInitializer implements CommandLineRunner {
 
     private void createAdminUser() {
         String username = "admin";
-        if (userService.findByUsername(username) != null) {
+        if (userService.findByUsername(username).isPresent()) {
             logger.info("Администратор уже существует");
             return;
         }
 
         User admin = new User();
         admin.setUsername(username);
-        admin.setPassword(passwordEncoder.encode("admin")); // Фиксированный пароль
+        admin.setPassword(passwordEncoder.encode("admin"));
         admin.setName("Admin");
         admin.setEmail("admin@example.com");
         admin.setAge(30);
 
-        Set<Role> roles = Set.of(
-                requireRole("ROLE_ADMIN"),
-                requireRole("ROLE_USER")
-        );
+        Set<Role> roles = new HashSet<>();
+        roles.add(getOrCreateRole("ROLE_ADMIN"));
+        roles.add(getOrCreateRole("ROLE_USER"));
         admin.setRoles(roles);
 
         userService.saveUser(admin);
         logger.info("Создан администратор: {}", username);
-        logger.debug("Данные администратора: {}", admin);
     }
 
     private void createRegularUser() {
         String username = "user";
-        if (userService.findByUsername(username) != null) {
+        if (userService.findByUsername(username).isPresent()) {
             logger.info("Пользователь уже существует");
             return;
         }
 
         User user = new User();
         user.setUsername(username);
-        user.setPassword(passwordEncoder.encode("user")); // Фиксированный пароль
+        user.setPassword(passwordEncoder.encode("user"));
         user.setName("User");
         user.setEmail("user@example.com");
         user.setAge(25);
-        user.setRoles(Set.of(requireRole("ROLE_USER")));
+        user.setRoles(Set.of(getOrCreateRole("ROLE_USER")));
 
         userService.saveUser(user);
         logger.info("Создан пользователь: {}", username);
-        logger.debug("Данные пользователя: {}", user);
     }
 
-    private Role requireRole(String roleName) {
-        Role role = roleDao.findByName(roleName);
-        if (role == null) {
-            throw new IllegalStateException("Роль не найдена: " + roleName);
-        }
-        return role;
+    private Role getOrCreateRole(String roleName) {
+        return roleDao.findByName(roleName)
+                .orElseGet(() -> {
+                    Role newRole = new Role(roleName);
+                    roleDao.save(newRole);
+                    logger.info("Создана новая роль: {}", roleName);
+                    return newRole;
+                });
     }
 }

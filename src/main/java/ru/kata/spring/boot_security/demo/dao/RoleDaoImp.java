@@ -5,23 +5,23 @@ import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ru.kata.spring.boot_security.demo.model.Role;
-
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class RoleDaoImp implements RoleDao {
-
     @PersistenceContext
     private EntityManager entityManager;
 
     @Override
-    public Role findByName(String name) {
+    public Optional<Role> findByName(String name) {
         try {
-            return entityManager.createQuery("SELECT r FROM Role r WHERE r.name = :name", Role.class)
+            Role role = entityManager.createQuery("SELECT r FROM Role r WHERE r.name = :name", Role.class)
                     .setParameter("name", name)
                     .getSingleResult();
+            return Optional.of(role);
         } catch (Exception e) {
-            return null;
+            return Optional.empty();
         }
     }
 
@@ -39,19 +39,12 @@ public class RoleDaoImp implements RoleDao {
     @Override
     @Transactional
     public void delete(Role role) {
-        // 1. Сначала удаляем все связи этой роли с пользователями
-        entityManager.createNativeQuery("DELETE FROM users_roles WHERE role_id = :roleId")
-                .setParameter("roleId", role.getId())
-                .executeUpdate();
-
-        // 2. Затем удаляем саму роль
-        Role mergedRole = entityManager.merge(role); // Прикрепляем сущность к контексту
+        Role mergedRole = entityManager.merge(role);
         entityManager.remove(mergedRole);
     }
 
-    // Дополнительный полезный метод
     @Override
-    public Role findById(Long id) {
-        return entityManager.find(Role.class, id);
+    public Optional<Role> findById(Long id) {
+        return Optional.ofNullable(entityManager.find(Role.class, id));
     }
 }

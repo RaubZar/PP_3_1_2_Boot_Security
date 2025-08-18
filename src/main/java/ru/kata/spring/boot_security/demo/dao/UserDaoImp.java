@@ -1,13 +1,12 @@
 package ru.kata.spring.boot_security.demo.dao;
 
-import jakarta.persistence.NoResultException;
-import jakarta.persistence.TypedQuery;
-import ru.kata.spring.boot_security.demo.model.User;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Repository;
-
+import ru.kata.spring.boot_security.demo.model.User;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class UserDaoImp implements UserDao {
@@ -15,8 +14,22 @@ public class UserDaoImp implements UserDao {
     private EntityManager entityManager;
 
     @Override
+    public Optional<User> findByUsername(String username) {
+        try {
+            User user = entityManager.createQuery(
+                            "SELECT u FROM User u WHERE u.username = :username", User.class)
+                    .setParameter("username", username)
+                    .getSingleResult();
+            return Optional.of(user);
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
+    @Override
     public List<User> getAllUsers() {
-        return entityManager.createQuery("SELECT u FROM User u", User.class).getResultList();
+        return entityManager.createQuery("SELECT u FROM User u", User.class)
+                .getResultList();
     }
 
     @Override
@@ -25,8 +38,8 @@ public class UserDaoImp implements UserDao {
     }
 
     @Override
-    public User getUserById(Long id) {
-        return entityManager.find(User.class, id);
+    public Optional<User> getUserById(Long id) {
+        return Optional.ofNullable(entityManager.find(User.class, id));
     }
 
     @Override
@@ -41,16 +54,17 @@ public class UserDaoImp implements UserDao {
             entityManager.remove(user);
         }
     }
-
     @Override
-    public User findByUsername(String username) {
+    @Transactional(readOnly = true)
+    public Optional<User> findByUsernameWithRoles(String username) {
         try {
-            TypedQuery<User> query = entityManager.createQuery(
-                    "SELECT u FROM User u WHERE u.username = :username", User.class);
-            query.setParameter("username", username);
-            return query.getSingleResult();
-        } catch (NoResultException e) {
-            return null;
+            User user = entityManager.createQuery(
+                            "SELECT u FROM User u LEFT JOIN FETCH u.roles WHERE u.username = :username", User.class)
+                    .setParameter("username", username)
+                    .getSingleResult();
+            return Optional.of(user);
+        } catch (Exception e) {
+            return Optional.empty();
         }
     }
 }
