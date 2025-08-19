@@ -12,5 +12,4 @@ public interface UserService extends UserDetailsService {
     Optional<User> getUserById(Long id);
     void updateUser(User user);
     void deleteUser(Long id);
-    Optional<User> findByUsernameWithRoles(String username);
 }

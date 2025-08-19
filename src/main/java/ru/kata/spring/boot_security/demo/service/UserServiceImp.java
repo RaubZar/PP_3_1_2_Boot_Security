@@ -1,7 +1,5 @@
 package ru.kata.spring.boot_security.demo.service;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,10 +11,8 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Transactional
 public class UserServiceImp implements UserService {
-
-    @PersistenceContext
-    private EntityManager entityManager;
 
     private final UserDao userDao;
     private final PasswordEncoder passwordEncoder;
@@ -29,23 +25,8 @@ public class UserServiceImp implements UserService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return findByUsernameWithRoles(username)
+        return userDao.findByUsernameWithRoles(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Optional<User> findByUsernameWithRoles(String username) {
-        try {
-            User user = entityManager.createQuery(
-                            "SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.roles WHERE u.username = :username",
-                            User.class)
-                    .setParameter("username", username)
-                    .getSingleResult();
-            return Optional.of(user);
-        } catch (Exception e) {
-            return Optional.empty();
-        }
     }
 
     @Override
@@ -61,7 +42,6 @@ public class UserServiceImp implements UserService {
     }
 
     @Override
-    @Transactional
     public void saveUser(User user) {
         if (!user.getPassword().startsWith("$2a$")) {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -76,7 +56,6 @@ public class UserServiceImp implements UserService {
     }
 
     @Override
-    @Transactional
     public void updateUser(User updatedUser) {
         User existingUser = userDao.getUserById(updatedUser.getId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -88,7 +67,6 @@ public class UserServiceImp implements UserService {
     }
 
     @Override
-    @Transactional
     public void deleteUser(Long id) {
         userDao.deleteUser(id);
     }

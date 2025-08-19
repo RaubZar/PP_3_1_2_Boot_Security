@@ -2,7 +2,6 @@ package ru.kata.spring.boot_security.demo.dao;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Repository;
 import ru.kata.spring.boot_security.demo.model.User;
 import java.util.List;
@@ -16,11 +15,10 @@ public class UserDaoImp implements UserDao {
     @Override
     public Optional<User> findByUsername(String username) {
         try {
-            User user = entityManager.createQuery(
+            return Optional.of(entityManager.createQuery(
                             "SELECT u FROM User u WHERE u.username = :username", User.class)
                     .setParameter("username", username)
-                    .getSingleResult();
-            return Optional.of(user);
+                    .getSingleResult());
         } catch (Exception e) {
             return Optional.empty();
         }
@@ -55,14 +53,13 @@ public class UserDaoImp implements UserDao {
         }
     }
     @Override
-    @Transactional(readOnly = true)
     public Optional<User> findByUsernameWithRoles(String username) {
         try {
-            User user = entityManager.createQuery(
-                            "SELECT u FROM User u LEFT JOIN FETCH u.roles WHERE u.username = :username", User.class)
+            return Optional.of(entityManager.createQuery(
+                            "SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.roles WHERE u.username = :username",
+                            User.class)
                     .setParameter("username", username)
-                    .getSingleResult();
-            return Optional.of(user);
+                    .getSingleResult());
         } catch (Exception e) {
             return Optional.empty();
         }
