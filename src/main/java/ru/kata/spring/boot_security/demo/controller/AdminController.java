@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
+import ru.kata.spring.boot_security.demo.dto.UserConverter;
 import ru.kata.spring.boot_security.demo.dto.UserDto;
 import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.service.UserService;
@@ -19,9 +20,12 @@ import ru.kata.spring.boot_security.demo.service.UserService;
 public class AdminController {
 
     private final UserService userService;
+    private final UserConverter userConverter;
 
-    public AdminController(UserService userService) {
+    public AdminController(UserService userService,  UserConverter userConverter) {
         this.userService = userService;
+        this.userConverter = userConverter;
+
     }
 
     @GetMapping
@@ -33,7 +37,7 @@ public class AdminController {
 
     @PostMapping("/add")
     public ModelAndView addUser(@ModelAttribute UserDto userDto) {
-        User user = convertToEntity(userDto);
+        User user = userConverter.convertToEntity(userDto);
         userService.saveUser(user);
         return new ModelAndView("redirect:/admin");
     }
@@ -50,14 +54,5 @@ public class AdminController {
         return new ModelAndView("redirect:/admin");
     }
 
-    private User convertToEntity(UserDto dto) {
-        User user = new User();
-        user.setUsername(dto.getUsername());
-        user.setPassword(dto.getPassword());
-        user.setName(dto.getName());
-        user.setEmail(dto.getEmail());
-        user.setAge(dto.getAge());
-        user.setRoles(dto.getRoles());
-        return user;
-    }
+
 }
